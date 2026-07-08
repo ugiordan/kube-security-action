@@ -45,7 +45,7 @@ runs:
   using: 'composite'
   steps:
     - name: Setup Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5
       with:
         python-version: '3.12'
 
@@ -53,8 +53,8 @@ runs:
       shell: bash
       run: |
         pip install -q \
-          git+https://github.com/ugiordan/tekton-guard.git@v1.0.0 \
-          git+https://github.com/ugiordan/helm-guard.git@v1.0.0
+          git+https://github.com/ugiordan/tekton-guard.git@8b2b2573394249f08aa63c5a903cc22cb9e37ceb \
+          git+https://github.com/ugiordan/helm-guard.git@232087b252a8a8d24ca649b2a86487110088abab
 
     - name: Detect and scan
       id: scan
@@ -66,6 +66,11 @@ runs:
         CONFIG_HELM: ${{ inputs.config-helm }}
         TOOLS: ${{ inputs.tools }}
       run: |
+        # Validate inputs
+        case "$FAIL_ON" in INFO|LOW|MEDIUM|HIGH|CRITICAL) ;; *) echo "::error::Invalid fail-on: $FAIL_ON"; exit 1;; esac
+        case "$FORMAT" in json|sarif|text) ;; *) echo "::error::Invalid format: $FORMAT"; exit 1;; esac
+        case "$TOOLS" in auto|tekton-guard|helm-guard|kube-chainsaw|all) ;; *) echo "::error::Invalid tools: $TOOLS"; exit 1;; esac
+
         TOTAL=0
         TEKTON_COUNT=0
         HELM_COUNT=0
@@ -88,11 +93,17 @@ runs:
           TEKTON_ARGS=(. --format "$FORMAT" --fail-on "$FAIL_ON")
           [ -n "$CONFIG_TEKTON" ] && TEKTON_ARGS+=(--config "$CONFIG_TEKTON")
 
+          set +e
           if [ "$FORMAT" = "sarif" ]; then
-            tekton-guard "${TEKTON_ARGS[@]}" --output tekton-guard-results.sarif 2>&1 || true
+            tekton-guard "${TEKTON_ARGS[@]}" --output tekton-guard-results.sarif 2>&1
+            rc=$?
+            [ $rc -ne 0 ] && [ ! -f "tekton-guard-results.sarif" ] && echo "::warning::tekton-guard exited with code $rc and produced no output"
           else
-            tekton-guard "${TEKTON_ARGS[@]}" --output tekton-guard-results.json 2>&1 || true
+            tekton-guard "${TEKTON_ARGS[@]}" --output tekton-guard-results.json 2>&1
+            rc=$?
+            [ $rc -ne 0 ] && [ ! -f "tekton-guard-results.json" ] && echo "::warning::tekton-guard exited with code $rc and produced no output"
           fi
+          set -e
 
           if [ -f "tekton-guard-results.json" ]; then
             TEKTON_COUNT=$(python3 -c "import json; d=json.load(open('tekton-guard-results.json')); print(d.get('summary',{}).get('total',0))" 2>/dev/null || echo 0)
@@ -118,20 +129,26 @@ runs:
             HELM_ARGS=("$target" --format "$FORMAT" --fail-on "$FAIL_ON")
             [ -n "$CONFIG_HELM" ] && HELM_ARGS+=(--config "$CONFIG_HELM")
 
+            set +e
             if [ "$FORMAT" = "sarif" ]; then
-              helm-guard "${HELM_ARGS[@]}" --output "helm-guard-results-$(basename $target).sarif" 2>&1 || true
+              helm-guard "${HELM_ARGS[@]}" --output "helm-guard-results-$(basename "$target").sarif" 2>&1
+              rc=$?
+              [ $rc -ne 0 ] && [ ! -f "helm-guard-results-$(basename "$target").sarif" ] && echo "::warning::helm-guard exited with code $rc for $target"
             else
-              helm-guard "${HELM_ARGS[@]}" --output "helm-guard-results-$(basename $target).json" 2>&1 || true
+              helm-guard "${HELM_ARGS[@]}" --output "helm-guard-results-$(basename "$target").json" 2>&1
+              rc=$?
+              [ $rc -ne 0 ] && [ ! -f "helm-guard-results-$(basename "$target").json" ] && echo "::warning::helm-guard exited with code $rc for $target"
             fi
+            set -e
           done
 
           HELM_COUNT=0
           for f in helm-guard-results-*.json helm-guard-results-*.sarif; do
             [ -f "$f" ] || continue
             if [[ "$f" == *.json ]]; then
-              C=$(python3 -c "import json; d=json.load(open('$f')); print(d.get('summary',{}).get('total',0))" 2>/dev/null || echo 0)
+              C=$(python3 -c "import json,sys; d=json.load(open(sys.argv[1])); print(d.get('summary',{}).get('total',0))" "$f" 2>/dev/null || echo 0)
             else
-              C=$(python3 -c "import json; d=json.load(open('$f')); print(len(d.get('runs',[{}])[0].get('results',[])))" 2>/dev/null || echo 0)
+              C=$(python3 -c "import json,sys; d=json.load(open(sys.argv[1])); print(len(d.get('runs',[{}])[0].get('results',[])))" "$f" 2>/dev/null || echo 0)
             fi
             HELM_COUNT=$((HELM_COUNT + C))
           done
@@ -152,7 +169,7 @@ runs:
 
     - name: Upload SARIF
       if: inputs.upload-sarif == 'true' && inputs.format == 'sarif'
-      uses: github/codeql-action/upload-sarif@v3
+      uses: github/codeql-action/upload-sarif@411c4c9a36b3fca4d674f06b6396b2c6d23522c6  # v3
       with:
         sarif_file: .
       continue-on-error: true
