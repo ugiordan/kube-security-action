@@ -1,0 +1,158 @@
+name: 'Kubernetes Security Scan'
+description: 'Auto-detect and run tekton-guard, helm-guard, and kube-chainsaw on your repo'
+branding:
+  icon: 'shield'
+  color: 'red'
+
+inputs:
+  fail-on:
+    description: 'Minimum severity to fail on (INFO, LOW, MEDIUM, HIGH, CRITICAL)'
+    required: false
+    default: 'HIGH'
+  format:
+    description: 'Output format (json, sarif, text)'
+    required: false
+    default: 'sarif'
+  config-tekton:
+    description: 'Config file for tekton-guard'
+    required: false
+    default: ''
+  config-helm:
+    description: 'Config file for helm-guard'
+    required: false
+    default: ''
+  upload-sarif:
+    description: 'Upload SARIF to GitHub Code Scanning'
+    required: false
+    default: 'true'
+  tools:
+    description: 'Tools to run (auto, tekton-guard, helm-guard, kube-chainsaw, all)'
+    required: false
+    default: 'auto'
+
+outputs:
+  tekton-findings:
+    description: 'Number of tekton-guard findings'
+    value: ${{ steps.scan.outputs.tekton-findings }}
+  helm-findings:
+    description: 'Number of helm-guard findings'
+    value: ${{ steps.scan.outputs.helm-findings }}
+  total-findings:
+    description: 'Total findings across all tools'
+    value: ${{ steps.scan.outputs.total-findings }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install tools
+      shell: bash
+      run: |
+        pip install -q \
+          git+https://github.com/ugiordan/tekton-guard.git@v1.0.0 \
+          git+https://github.com/ugiordan/helm-guard.git@v1.0.0
+
+    - name: Detect and scan
+      id: scan
+      shell: bash
+      env:
+        FAIL_ON: ${{ inputs.fail-on }}
+        FORMAT: ${{ inputs.format }}
+        CONFIG_TEKTON: ${{ inputs.config-tekton }}
+        CONFIG_HELM: ${{ inputs.config-helm }}
+        TOOLS: ${{ inputs.tools }}
+      run: |
+        TOTAL=0
+        TEKTON_COUNT=0
+        HELM_COUNT=0
+        EXIT_CODE=0
+
+        # Auto-detect or use specified tools
+        RUN_TEKTON=false
+        RUN_HELM=false
+
+        if [ "$TOOLS" = "auto" ] || [ "$TOOLS" = "all" ]; then
+          [ -d ".tekton" ] && RUN_TEKTON=true
+          ([ -f "Chart.yaml" ] || [ -d "charts" ]) && RUN_HELM=true
+        fi
+        [ "$TOOLS" = "tekton-guard" ] && RUN_TEKTON=true
+        [ "$TOOLS" = "helm-guard" ] && RUN_HELM=true
+
+        # Run tekton-guard
+        if [ "$RUN_TEKTON" = "true" ]; then
+          echo "::group::tekton-guard"
+          TEKTON_ARGS=(. --format "$FORMAT" --fail-on "$FAIL_ON")
+          [ -n "$CONFIG_TEKTON" ] && TEKTON_ARGS+=(--config "$CONFIG_TEKTON")
+
+          if [ "$FORMAT" = "sarif" ]; then
+            tekton-guard "${TEKTON_ARGS[@]}" --output tekton-guard-results.sarif 2>&1 || true
+          else
+            tekton-guard "${TEKTON_ARGS[@]}" --output tekton-guard-results.json 2>&1 || true
+          fi
+
+          if [ -f "tekton-guard-results.json" ]; then
+            TEKTON_COUNT=$(python3 -c "import json; d=json.load(open('tekton-guard-results.json')); print(d.get('summary',{}).get('total',0))" 2>/dev/null || echo 0)
+          elif [ -f "tekton-guard-results.sarif" ]; then
+            TEKTON_COUNT=$(python3 -c "import json; d=json.load(open('tekton-guard-results.sarif')); print(len(d.get('runs',[{}])[0].get('results',[])))" 2>/dev/null || echo 0)
+          fi
+          echo "tekton-guard: $TEKTON_COUNT findings"
+          echo "::endgroup::"
+        fi
+
+        # Run helm-guard
+        if [ "$RUN_HELM" = "true" ]; then
+          echo "::group::helm-guard"
+          HELM_TARGETS=()
+          [ -f "Chart.yaml" ] && HELM_TARGETS+=(.)
+          if [ -d "charts" ]; then
+            for d in charts/*/; do
+              [ -f "${d}Chart.yaml" ] && HELM_TARGETS+=("$d")
+            done
+          fi
+
+          for target in "${HELM_TARGETS[@]}"; do
+            HELM_ARGS=("$target" --format "$FORMAT" --fail-on "$FAIL_ON")
+            [ -n "$CONFIG_HELM" ] && HELM_ARGS+=(--config "$CONFIG_HELM")
+
+            if [ "$FORMAT" = "sarif" ]; then
+              helm-guard "${HELM_ARGS[@]}" --output "helm-guard-results-$(basename $target).sarif" 2>&1 || true
+            else
+              helm-guard "${HELM_ARGS[@]}" --output "helm-guard-results-$(basename $target).json" 2>&1 || true
+            fi
+          done
+
+          HELM_COUNT=0
+          for f in helm-guard-results-*.json helm-guard-results-*.sarif; do
+            [ -f "$f" ] || continue
+            if [[ "$f" == *.json ]]; then
+              C=$(python3 -c "import json; d=json.load(open('$f')); print(d.get('summary',{}).get('total',0))" 2>/dev/null || echo 0)
+            else
+              C=$(python3 -c "import json; d=json.load(open('$f')); print(len(d.get('runs',[{}])[0].get('results',[])))" 2>/dev/null || echo 0)
+            fi
+            HELM_COUNT=$((HELM_COUNT + C))
+          done
+          echo "helm-guard: $HELM_COUNT findings"
+          echo "::endgroup::"
+        fi
+
+        TOTAL=$((TEKTON_COUNT + HELM_COUNT))
+        echo "tekton-findings=$TEKTON_COUNT" >> "$GITHUB_OUTPUT"
+        echo "helm-findings=$HELM_COUNT" >> "$GITHUB_OUTPUT"
+        echo "total-findings=$TOTAL" >> "$GITHUB_OUTPUT"
+
+        echo ""
+        echo "=== Security Scan Summary ==="
+        echo "tekton-guard: $TEKTON_COUNT"
+        echo "helm-guard: $HELM_COUNT"
+        echo "Total: $TOTAL"
+
+    - name: Upload SARIF
+      if: inputs.upload-sarif == 'true' && inputs.format == 'sarif'
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: .
+      continue-on-error: true
