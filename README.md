@@ -106,12 +106,24 @@ That's it. The action detects `.tekton/` directories and `Chart.yaml` files auto
 - run: echo "Found ${{ steps.scan.outputs.total-findings }} security issues"
 ```
 
+## Complete security scanning
+
+For full coverage including RBAC privilege chain analysis, add [kube-chainsaw](https://github.com/ugiordan/kube-chainsaw) as a second step:
+
+```yaml
+- uses: ugiordan/kube-security-action@v1   # Tekton + Helm
+- uses: ugiordan/kube-chainsaw@v1           # RBAC chains
+  with:
+    paths: config/ deploy/
+```
+
 ## Tools
 
-| Tool | Repository | Docs |
-|------|------------|------|
-| tekton-guard | [ugiordan/tekton-guard](https://github.com/ugiordan/tekton-guard) | [ugiordan.github.io/tekton-guard](https://ugiordan.github.io/tekton-guard/) |
-| helm-guard | [ugiordan/helm-guard](https://github.com/ugiordan/helm-guard) | [ugiordan.github.io/helm-guard](https://ugiordan.github.io/helm-guard/) |
+| Tool | Repository | Docs | Checks |
+|------|------------|------|--------|
+| tekton-guard | [ugiordan/tekton-guard](https://github.com/ugiordan/tekton-guard) | [Docs](https://ugiordan.github.io/tekton-guard/) | 50 |
+| helm-guard | [ugiordan/helm-guard](https://github.com/ugiordan/helm-guard) | [Docs](https://ugiordan.github.io/helm-guard/) | 40 |
+| kube-chainsaw | [ugiordan/kube-chainsaw](https://github.com/ugiordan/kube-chainsaw) | [Docs](https://ugiordan.github.io/kube-chainsaw/) | graph-based |
 
 ## License
 

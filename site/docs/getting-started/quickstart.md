@@ -47,3 +47,37 @@ jobs:
           format: text
           upload-sarif: 'false'
 ```
+
+---
+
+## Complete security scanning setup
+
+For full coverage including RBAC privilege chain analysis, add [kube-chainsaw](https://github.com/ugiordan/kube-chainsaw) as a second step:
+
+```yaml
+name: Security Scan
+on: [push, pull_request]
+
+permissions:
+  security-events: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Tekton + Helm security (auto-detected)
+      - uses: ugiordan/kube-security-action@v1
+
+      # RBAC privilege chain analysis
+      - uses: ugiordan/kube-chainsaw@v1
+        with:
+          paths: config/ deploy/
+          fail-on: HIGH
+```
+
+| Step | Tool | What it scans | Checks |
+|------|------|---------------|--------|
+| 1 | kube-security-action | `.tekton/` + `Chart.yaml` | 90 (50 + 40) |
+| 2 | kube-chainsaw | RBAC manifests | graph-based |
