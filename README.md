@@ -1,5 +1,9 @@
 # kube-security-action
 
+<p align="center">
+  <img src="site/docs/images/logo.svg" alt="kube-security-action" width="120">
+</p>
+
 Unified GitHub Action for Kubernetes security scanning. Auto-detects repo content and runs the right tools, no configuration needed.
 
 Wraps [tekton-guard](https://github.com/ugiordan/tekton-guard) and [helm-guard](https://github.com/ugiordan/helm-guard) into a single action with SARIF upload to GitHub Code Scanning.
