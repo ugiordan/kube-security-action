@@ -1,0 +1,92 @@
+site_name: kube-security-action
+site_url: https://ugiordan.github.io/kube-security-action
+repo_url: https://github.com/ugiordan/kube-security-action
+repo_name: ugiordan/kube-security-action
+
+copyright: Copyright &copy; Ugo Giordano
+
+theme:
+  name: material
+  language: en
+  icon:
+    repo: fontawesome/brands/github
+    logo: material/shield-lock
+  font:
+    text: Red Hat Text
+    code: Red Hat Mono
+  palette:
+    - scheme: default
+      primary: black
+      toggle:
+        icon: material/brightness-4
+        name: Switch to dark mode
+    - scheme: slate
+      primary: black
+      toggle:
+        icon: material/brightness-7
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.top
+    - navigation.indexes
+    - navigation.instant
+    - navigation.path
+    - navigation.sections
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - toc.follow
+
+plugins:
+  - search
+  - glightbox:
+      touchNavigation: true
+      loop: false
+      zoomable: true
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - attr_list
+  - md_in_html
+  - def_list
+  - tables
+  - toc:
+      permalink: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/ugiordan/kube-security-action
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Quick Start: getting-started/quickstart.md
+    - Configuration: getting-started/configuration.md
+  - Reference:
+    - Action Inputs: reference/inputs.md
+    - Action Outputs: reference/outputs.md
+  - Tools:
+    - tekton-guard: tools/tekton-guard.md
+    - helm-guard: tools/helm-guard.md
+    - kube-chainsaw: tools/kube-chainsaw.md
