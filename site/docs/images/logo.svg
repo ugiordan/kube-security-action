@@ -1,12 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" width="200" height="240">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 144" width="120" height="144">
   <defs>
-    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#a78bfa;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+    <linearGradient id="g" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#a78bfa"/>
+      <stop offset="100%" stop-color="#6d28d9"/>
     </linearGradient>
   </defs>
-  <path d="M100 10 L190 60 L190 140 L100 230 L10 140 L10 60 Z" fill="url(#shieldGrad)" stroke="#5b21b6" stroke-width="4"/>
-  <path d="M80 75 L110 75 L110 105 L95 120 L80 105 Z" fill="#f87171" stroke="white" stroke-width="2"/>
-  <path d="M115 75 L145 75 L145 105 L130 120 L115 105 Z" fill="#60a5fa" stroke="white" stroke-width="2"/>
-  <path d="M97 110 L127 110 L127 140 L112 155 L97 140 Z" fill="#4ade80" stroke="white" stroke-width="2"/>
+  <!-- Shield -->
+  <path d="M60 4 L116 32 L116 88 L60 140 L4 88 L4 32 Z" fill="url(#g)" stroke="#4c1d95" stroke-width="3" stroke-linejoin="round"/>
+  <!-- Inner border -->
+  <path d="M60 16 L106 40 L106 82 L60 128 L14 82 L14 40 Z" fill="none" stroke="white" stroke-width="1.5" opacity="0.3" stroke-linejoin="round"/>
+  <!-- Three dots representing three tools (red, blue, green) -->
+  <circle cx="40" cy="64" r="10" fill="#f87171" stroke="white" stroke-width="2"/>
+  <circle cx="80" cy="64" r="10" fill="#60a5fa" stroke="white" stroke-width="2"/>
+  <circle cx="60" cy="86" r="10" fill="#4ade80" stroke="white" stroke-width="2"/>
 </svg>
