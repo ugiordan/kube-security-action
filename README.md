@@ -33,10 +33,10 @@ Full documentation at [ugiordan.github.io/kube-security-action](https://ugiordan
 
 | Tool | Target | Checks | What it catches |
 |------|--------|--------|-----------------|
-| [tekton-guard](https://github.com/ugiordan/tekton-guard) | `.tekton/` pipeline definitions | 48 checks, 12 categories | Mutable refs, injection, privilege escalation, trigger security, pipeline logic manipulation |
-| [helm-guard](https://github.com/ugiordan/helm-guard) | `Chart.yaml`, `values.yaml`, templates | 37 checks, 10 categories | Dependency pinning, tpl injection, OLM security, CVE-based risks, chart provenance |
+| [tekton-guard](https://github.com/ugiordan/tekton-guard) | `.tekton/` pipeline definitions | 50 checks, 12 categories | Mutable refs, injection, privilege escalation, trigger security, pipeline logic manipulation |
+| [helm-guard](https://github.com/ugiordan/helm-guard) | `Chart.yaml`, `values.yaml`, templates | 42 checks, 10 categories | Dependency pinning, tpl injection, OLM security, CVE-based risks, chart provenance |
 
-85 combined checks. Auto-detection runs only the tools relevant to your repo.
+92 combined checks. Auto-detection runs only the tools relevant to your repo.
 
 ## Quick start
 
@@ -126,7 +126,7 @@ For full coverage including RBAC privilege chain analysis, add [kube-chainsaw](h
 | Tool | Repository | Docs | Checks |
 |------|------------|------|--------|
 | tekton-guard | [ugiordan/tekton-guard](https://github.com/ugiordan/tekton-guard) | [Docs](https://ugiordan.github.io/tekton-guard/) | 50 |
-| helm-guard | [ugiordan/helm-guard](https://github.com/ugiordan/helm-guard) | [Docs](https://ugiordan.github.io/helm-guard/) | 40 |
+| helm-guard | [ugiordan/helm-guard](https://github.com/ugiordan/helm-guard) | [Docs](https://ugiordan.github.io/helm-guard/) | 42 |
 | kube-chainsaw | [ugiordan/kube-chainsaw](https://github.com/ugiordan/kube-chainsaw) | [Docs](https://ugiordan.github.io/kube-chainsaw/) | graph-based |
 
 ## License

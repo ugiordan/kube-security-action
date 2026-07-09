@@ -1,6 +1,6 @@
 # helm-guard
 
-40 checks for Helm chart supply chain security. Scans Chart.yaml, values.yaml, and template files.
+42 checks for Helm chart supply chain security. Scans Chart.yaml, values.yaml, and template files.
 
 **Full documentation:** [ugiordan.github.io/helm-guard](https://ugiordan.github.io/helm-guard/)
 
@@ -15,4 +15,4 @@
 | Trust | 7 | Secrets, untrusted repos, hostNetwork |
 | Security | 6 | Path traversal CVEs, symlink, SA automount |
 | OLM | 4 | Auto-approval, community catalog |
-| + 5 more categories | 10 | Hooks, provenance, namespace, deps |
+| + 5 more categories | 12 | Hooks, provenance, namespace, deps |
