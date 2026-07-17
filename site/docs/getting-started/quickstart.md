@@ -79,5 +79,5 @@ jobs:
 
 | Step | Tool | What it scans | Checks |
 |------|------|---------------|--------|
-| 1 | kube-security-action | `.tekton/` + `Chart.yaml` | 92 (50 + 42) |
+| 1 | kube-security-action | `.tekton/` + `Chart.yaml` | 113 (60 + 53) |
 | 2 | kube-chainsaw | RBAC manifests | graph-based |
